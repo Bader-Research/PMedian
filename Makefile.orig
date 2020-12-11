@@ -1,0 +1,214 @@
+EXECS     = mpiselect
+
+# TARGET_ARCH = AXP
+# TARGET_ARCH = AIX_NATIVE
+# TARGET_ARCH = AIX_MPICH
+# TARGET_ARCH = SGI_NATIVE
+# TARGET_ARCH = SGI_MPICH
+# TARGET_ARCH = FBSD
+# TARGET_ARCH = BEOWULF_LINUX_LAM
+TARGET_ARCH = SUN_MPICH
+# TARGET_ARCH = LINUX_MPICH
+
+S_VER_MAJ  = 1
+S_VER_MIN  = 4
+S_VER_REL  = A
+
+OPT         = -O$(O_LEVEL)
+# OPT       = -g 
+CFLAGS      = $(OPT) -D$(TARGET_ARCH) $(MCFLAGS) -I$(MPI_INC)
+CC          = $(MPI_CC) 
+
+ifeq ($(TARGET_ARCH),AXP)
+# MESSAGE PASSING LIBRARY FOR "AXP":
+MPI       = MPICH
+# MPI       = DAB_MPICH
+# MPI       = LAM
+
+MCFLAGS    = 
+
+ifeq ($(MPI),MPICH)
+	MPI_DIR     = /fs/parallel/mpich#
+	MPI_INC     = $(MPI_DIR)/include
+	MPI_LIB     = # -L$(MPI_DIR)/lib/alpha/ch_p4 -lmpi
+	MPI_CC      = mpicc
+	O_LEVEL     = 5 -tune ev4 -fast -unroll 0
+endif
+ifeq ($(MPI),DAB_MPICH)
+ 	MPI_DIR     = /fs/tsunami/dbader/mpich#
+	MPI_INC     = $(MPI_DIR)/include
+ 	MPI_LIB     = # -L$(MPI_DIR)/lib/alpha/ch_p4 -lmpi
+ 	MPI_CC      = mpicc
+ 	O_LEVEL     = 5 -tune ev4  -fast -uncroll 0
+endif
+ifeq ($(MPI),LAM)
+ 	MPI_DIR     = /fs/parallel/lam#
+	MPI_INC     = $(MPI_DIR)/h
+ 	MPI_LIB     = -L$(MPI_DIR)/lib -lmpi
+ 	MPI_CC      = hcc
+ 	O_LEVEL     = 2
+endif
+
+ARZ = Z
+
+endif # AXP
+ifeq ($(TARGET_ARCH),AIX_NATIVE)
+MPI_CC      = mpcc
+O_LEVEL     = 2
+MCFLAGS     = -DAIX 
+
+MPI_DIR     = /usr/lpp/ppe.poe#
+MPI_INC     = $(MPI_DIR)/include
+MPI_LIB     = -L/usr/lpp/ppe.poe/lib -lmpi 
+
+ARZ         =
+endif # AIX_NATIVE
+ifeq ($(TARGET_ARCH),AIX_MPICH)
+MPI_DIR     = /fs/nene/dbader/mpich#
+MPI_INC     = $(MPI_DIR)/include
+MPI_LIB     = -L$(MPI_DIR)/lib/rs6000/ch_p4 -lmpi
+MPI_CC      = $(MPI_DIR)/bin/mpicc
+O_LEVEL     = 2
+MCFLAGS     = -DAIX 
+ARZ         =
+endif # AIX_MPICH
+ifeq ($(TARGET_ARCH),FBSD)
+MPI_CC      = mpicc
+O_LEVEL     = 2
+MCFLAGS     = 
+MPI_DIR     = /usr/local/mpich#
+MPI_INC     = $(MPI_DIR)/include
+MPI_LIB     = -L$(MPI_DIR)/lib/alpha/ch_p4 -lmpi
+
+ARZ         =
+endif # FBSD
+ifeq ($(TARGET_ARCH),SGI_NATIVE)
+MPI_CC      = cc
+O_LEVEL     = 2
+MCFLAGS     = -DSGI
+MPI_INC     = /usr/include
+MPI_LIB     = -L/usr/lib64 -lmpi
+
+ARZ         =
+endif # SGI_NATIVE
+ifeq ($(TARGET_ARCH),SGI_MPICH)
+MPI_DIR     = /usr/local/apps/mpich-10.13#
+MPI_INC     = $(MPI_DIR)/include
+MPI_LIB     = -L$(MPI_DIR)/lib/IRIX64/ch_p4 -lmpi
+MPI_CC      = $(MPI_DIR)/bin/mpicc
+O_LEVEL     = 3
+MCFLAGS     = -DSGI
+
+ARZ         =
+endif # SGI_MPICH
+ifeq ($(TARGET_ARCH),SUN_MPICH)
+MPI_DIR     = /usr/local/pkg/mpich/mpich-1.1.2#
+MPI_INC     = $(MPI_DIR)/include -I$(MPI_DIR)/build/solaris/ch_p4/include
+MPI_LIB     = -L$(MPI_DIR)/build/solaris/ch_p4/lib -lmpich
+MPI_CC      = $(MPI_DIR)/bin/mpicc
+O_LEVEL     = 3
+MCFLAGS     = -DSUN
+
+ARZ         =
+endif # SUN_MPICH
+ifeq ($(TARGET_ARCH),LINUX_MPICH)
+MPI_DIR     = /home/dbader/linuxcluster/mpich#
+MPI_INC     = $(MPI_DIR)/include
+MPI_LIB     = -L$(MPI_DIR)/lib/LINUX/ch_p4 -lmpi
+MPI_CC      = $(MPI_DIR)/bin/mpicc
+O_LEVEL     = 3
+MCFLAGS     = -DLINUX
+
+ARZ         =
+endif # LINUX_MPICH
+ifeq ($(TARGET_ARCH),BEOWULF_LINUX_LAM)
+
+MPI_DIR     = /usr#
+MPI_INC     = $(MPI_DIR)/include
+MPI_LIB     = -L$(MPI_DIR)/lib -lmpi
+MPI_CC      = $(MPI_DIR)/bin/hcc
+O_LEVEL     = 2
+
+MCFLAGS     = -DLINUX 
+
+ARZ         =
+endif # BEOWULF_LINUX_LAM
+
+ifeq (,$(findstring BEOWULF_LINUX,$(TARGET_ARCH)))
+MAKE       = gmake --no-print-directory
+else
+MAKE       = make --no-print-directory
+endif
+MAKEORIG   = Makefile.orig
+MAKEFILE   = Makefile
+MAKEDEPEND = makedepend
+RANLIB     = ranlib
+CP         = cp
+MV         = mv
+MKDIR      = mkdir
+TAR        = tar
+ZIP        = gzip
+
+DIST_DIR   = mpiselect-$(S_VER_MAJ).$(S_VER_MIN)$(S_VER_REL)
+DIST_NAME  = $(DIST_DIR).tar
+DIST_SAVE  = dist
+
+LIBS       = $(MPI_LIB) -lm 
+
+
+SRCS   = ${wildcard *.c}
+OBJS   = $(SRCS:.c=.o)
+
+.PHONY: all depend dist clean tidy cleandist
+
+default: $(MAKEFILE)
+	$(MAKE) -f $(MAKEFILE) $(EXECS)
+
+all: default
+
+$(EXECS): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS) 
+
+$(MAKEFILE) :
+	$(MAKE) -f $(MAKEORIG) depend
+
+depend:
+	$(CP) $(MAKEORIG) $(MAKEFILE)
+	-$(MAKEDEPEND) -f$(MAKEFILE) -- $(CFLAGS) -I$(MPI_INC) -- $(SRCS) 
+	$(MAKE) -f $(MAKEFILE)
+
+dist:
+	$(RM) -fr $(DIST_DIR) $(DIST_NAME).*
+	$(MKDIR) $(DIST_DIR)
+	$(CP) $(MAKEORIG) \
+	   $(SRCS) $(SRCS:.c=.h) \
+	   $(DIST_DIR)
+	$(TAR) cvf $(DIST_NAME) $(DIST_DIR)
+	$(ZIP) $(DIST_NAME)
+	if [ ! -d $(DIST_SAVE) ] ; then \
+	   $(MKDIR) $(DIST_SAVE) ; \
+	fi
+	$(MV) $(DIST_NAME).* $(DIST_SAVE)
+	$(CP) README $(DIST_SAVE)
+	$(CP) ALGORITHMS $(DIST_SAVE)
+	chown dbader $(DIST_SAVE)/*
+	chgrp hpc $(DIST_SAVE)/*
+	chmod 640 $(DIST_SAVE)/*
+	$(RM) -fr $(DIST_DIR) 
+
+.SUFFIXES: .c
+
+.c.o : 
+	$(CC) $(CFLAGS) -c $< 
+
+clean :
+	$(RM) -f core *.o $(EXECS) mon.out PI* *~ \
+	      $(MAKEFILE).bak
+
+tidy :
+	$(MAKE) -f $(MAKEORIG) clean
+	$(RM) -f $(MAKEFILE)
+
+cleandist :
+	$(RM) -fr $(DIST_SAVE)
+
